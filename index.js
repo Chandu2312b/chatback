@@ -8,43 +8,41 @@ app.use(cors());
 
 const server = http.createServer(app);
 
-// Setting up socket.io with CORS
+// Setup socket.io with proper CORS
 const io = new Server(server, {
   cors: {
-    origin: "*", // Allow all origins (for development)
-    methods: ["GET", "POST"]
+    origin: "*", // Replace with your frontend URL in production for security
+    methods: ["GET", "POST"],
   },
 });
 
-// Listen for a connection from a frontend client
+// Handle client connections
 io.on("connection", (socket) => {
   console.log("[Backend] New user connected:", socket.id);
 
-  // Listen for a user joining a room
   socket.on("join-room", (roomId) => {
     socket.join(roomId);
     console.log(`[Backend] User ${socket.id} joined room: ${roomId}`);
 
-    // Listen for messages in this room
     socket.on("send-message", (msg) => {
-      console.log(`[Backend] Received message from ${socket.id} in room ${roomId}:`, msg);
+      console.log(`[Backend] Received from ${socket.id} in ${roomId}:`, msg);
 
       io.to(roomId).emit("receive-message", {
         sender: socket.id,
         message: msg,
       });
 
-      console.log(`[Backend] Message emitted to room ${roomId}`);
+      console.log(`[Backend] Broadcasted to room ${roomId}`);
     });
 
-    // Handle user disconnecting
     socket.on("disconnect", () => {
       console.log("[Backend] User disconnected:", socket.id);
     });
   });
 });
 
-// Start the server on port 5000
-server.listen(5000, () => {
-  console.log("[Backend] Server is running on http://localhost:5000");
+// Use dynamic port from environment (important for Render)
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+  console.log(`[Backend] Server is running on port ${PORT}`);
 });
