@@ -3,20 +3,21 @@ const http = require("http");
 const cors = require("cors");
 const { Server } = require("socket.io");
 
+// Initialize express app BEFORE using it
 const app = express();
 app.use(cors());
 
 const server = http.createServer(app);
 
-// Setup socket.io with proper CORS
+// Setting up socket.io with CORS
 const io = new Server(server, {
   cors: {
-    origin: "*", // Replace with your frontend URL in production for security
-    methods: ["GET", "POST"],
+    origin: "*", // Allow all origins (you can restrict this later)
+    methods: ["GET", "POST"]
   },
 });
 
-// Handle client connections
+// Socket.io connection
 io.on("connection", (socket) => {
   console.log("[Backend] New user connected:", socket.id);
 
@@ -25,14 +26,11 @@ io.on("connection", (socket) => {
     console.log(`[Backend] User ${socket.id} joined room: ${roomId}`);
 
     socket.on("send-message", (msg) => {
-      console.log(`[Backend] Received from ${socket.id} in ${roomId}:`, msg);
-
+      console.log(`[Backend] Received message from ${socket.id} in room ${roomId}:`, msg);
       io.to(roomId).emit("receive-message", {
         sender: socket.id,
         message: msg,
       });
-
-      console.log(`[Backend] Broadcasted to room ${roomId}`);
     });
 
     socket.on("disconnect", () => {
@@ -41,7 +39,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// Use dynamic port from environment (important for Render)
+// Use dynamic port for Render, fallback to 5000 locally
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`[Backend] Server is running on port ${PORT}`);
